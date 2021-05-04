@@ -4,43 +4,50 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.edu.ifsp.exception.ResourceNotFoundException;
 import br.edu.ifsp.model.Person;
+import br.edu.ifsp.repository.PersonRepository;
 
 @Service
 public class PersonServices {
 	
-	private final AtomicLong counter = new AtomicLong();
+	@Autowired
+	PersonRepository repository;
 	
-	public Person findById(String id) {
-		Person person = new Person();
-		person.setId(counter.incrementAndGet());
-		person.setFirstName("Antonio");
-		person.setLastName("Angelo");
-		person.setAddress("Avenida Salgado Filho, 3501 - Guarulhos");
-		person.setGender("Male");
-		return person;
-		
+	public Person create(Person person) {
+		return repository.save(person);
 	}
 	
 	public List<Person> findAll(){
-		List<Person> persons = new ArrayList<Person>();
-		for(int i=0; i<10; i++) {
-			Person person = mockPerson(i);
-			persons.add(person);
-		}
-		return persons;
+		return repository.findAll();
 	}
 	
-	private Person mockPerson(int i) {
-		Person person = new Person();
-		person.setId(counter.incrementAndGet());
-		person.setFirstName("Nome " + i);
-		person.setLastName("Sobrenome " + i);
-		person.setAddress("Endereço " + i);
-		person.setGender("Male");
-		return person;
+	public Person findById(Long id) {
+		return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Não encontramos registros para esse ID"));
 	}
+	
+	public Person update(Person person) {
+		Person entity = repository.findById(person.getId())
+				.orElseThrow(() -> new ResourceNotFoundException("Não encontramos registros para este ID"));
+		
+		entity.setFirstName(person.getFirstName());
+		entity.setLastName(person.getLastName());
+		entity.setAddress(person.getAddress());
+		entity.setGender(person.getGender());
+		return repository.save(entity);
+	}
+	
+	public void delete(Long id) {
+		Person entity = repository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Não encontramos registros para este ID"));
+		repository.delete(entity);
+	}
+	
+
+	
+
 
 }
